@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Yahoo Pipes: Top 10 news!</title>
+    <script data-require="jquery@*" data-semver="2.1.4" src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet" data-semver="3.3.1" data-require="bootstrap-css@*" />
+    <style>
+        .thumbnail {
+            max-width: 128px;
+            max-height: 100%;
+        }
+
+        .vcenter {
+            display: inline-block;
+            vertical-align: middle;
+            float: none;
+        }
+
+        .table-cell {
+            padding: 0px 10px;
+        }
+
+        .bg-cover {
+            background-size: cover;
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+
+<body class="container">
+<div id="content-container">
+    <header>
+        <h1 class="well text-center" id="page-motto"></h1>
+    </header>
+    <section class="jumbotron">
+        <div class="content" id="data-host"></div>
+    </section>
+</div>
+<script>
+    var dataLoadedCallback = function(data) {
+        $('#data-host').append(parsePipesResponse(data));
+        $('#page-motto').text('Top ' + data.count + ' news from "' + data.value.title + '" pipe!');
+    };
+
+    var composePipeElement = function(id, image, title, link, description) {
+        var htmlElementCode = '<div style="background-image:url(' + image + ')" class="well table-row bg-cover">';
+        htmlElementCode += '<div class="vcenter table-cell">';
+        htmlElementCode += '<a class="thumbnail" href="' + image + '" target="_blank">';
+        htmlElementCode += '<img src="' + image + '" title="Click to open full size image in new window">';
+        htmlElementCode += '</a>';
+        htmlElementCode += '<a onclick="show(' + id + ')">';
+        htmlElementCode += '<p class="vcenter table-cell well">' + title + '</p></a>';
+        htmlElementCode += '<p id="' + id + '" class="vcenter table-cell well" style="display: none">' + description;
+        htmlElementCode += '<br/><a href="' + link + '" target="_blank">More info</a></p>';
+        htmlElementCode += '</div></div>';
+        return $(htmlElementCode);
+    };
+
+    var parsePipesResponse = function(data) {
+        var divsHost = $(document.createElement('div'));
+
+        for (var i = 0; i < data.count; i++) {
+            var imageUrl = data.value.items[i].enclosure.url;
+            var title = data.value.items[i].title;
+            var link = data.value.items[i].link;
+            var description = data.value.items[i].description;
+            divsHost.append(composePipeElement(i, imageUrl, title, link, description));
+        }
+
+        return divsHost;
+    };
+
+    var show = function(id) {
+        var element = $('#'+id);
+        if(element !== null)
+            element.toggle();
+    };
+
+    var load = function(){
+        var script = document.createElement( 'script' );
+        script.src = 'http://pipes.yahoo.com/pipes/pipe.run?_id=e9a2e77dffb3205d035c4e311d77bbe6&_render=json&_callback=dataLoadedCallback';
+        var bodyTag = $('body');
+        bodyTag.append(script);
+    };
+
+    load();
+
+</script>
+</body>
+</html>
