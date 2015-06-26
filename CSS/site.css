@@ -1,0 +1,19 @@
+.thumbnail {
+    max-width: 30%;
+    max-height: 30%;
+}
+
+.vcenter {
+    display: inline-block;
+    vertical-align: middle;
+    float: none;
+}
+
+.table-cell {
+    padding: 0px 10px;
+}
+
+.bg-cover {
+    background-size: cover;
+    background-repeat: no-repeat;
+}
