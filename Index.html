@@ -4,6 +4,7 @@
 <head>
     <title>Yahoo Pipes: Top 10 news!</title>
     <script data-require="jquery@*" data-semver="2.1.4" src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="http://ajax.aspnetcdn.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js"></script>
     <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet" data-semver="3.3.1" data-require="bootstrap-css@*" />
     <style>
         .thumbnail {
@@ -38,23 +39,34 @@
     </section>
 </div>
 <script>
-    var dataLoadedCallback = function(data) {
+    const requestUrl = 'http://pipes.yahoo.com/pipes/pipe.run?_id=e9a2e77dffb3205d035c4e311d77bbe6&_render=json';
+    var pageMotto = $('#page-motto');
+
+    var htmlPipeTemplate;
+    (function(){
+        htmlPipeTemplate = '<div style="background-image:url(${ImageSrc})" class="well table-row bg-cover">';
+        htmlPipeTemplate += '<div class="vcenter table-cell">';
+        htmlPipeTemplate += '<a class="thumbnail" href="${ImageSrc}" target="_blank">';
+        htmlPipeTemplate += '<img src="${ImageSrc}" title="Click to open full size image in new window">';
+        htmlPipeTemplate += '</a>';
+        htmlPipeTemplate += '<a onclick="show(${Id})">';
+        htmlPipeTemplate += '<p class="vcenter table-cell well">${Title}</p></a>';
+        htmlPipeTemplate += '<p id="${Id}" class="vcenter table-cell well" style="display: none">${Description}';
+        htmlPipeTemplate += '<br/><a href="${Url}" target="_blank">More info</a></p>';
+        htmlPipeTemplate += '</div></div>';
+    })();
+
+    var renderNewsOnPage = function(data) {
+        if(data.count == 0){
+            pageMotto.text('Sorry, but server returned no news for now. Try again later.');
+        } else {
         $('#data-host').append(parsePipesResponse(data));
-        $('#page-motto').text('Top ' + data.count + ' news from "' + data.value.title + '" pipe!');
+        pageMotto.text('Top ' + data.count + ' news from "' + data.value.title + '" pipe!');
+        }
     };
 
-    var composePipeElement = function(id, image, title, link, description) {
-        var htmlElementCode = '<div style="background-image:url(' + image + ')" class="well table-row bg-cover">';
-        htmlElementCode += '<div class="vcenter table-cell">';
-        htmlElementCode += '<a class="thumbnail" href="' + image + '" target="_blank">';
-        htmlElementCode += '<img src="' + image + '" title="Click to open full size image in new window">';
-        htmlElementCode += '</a>';
-        htmlElementCode += '<a onclick="show(' + id + ')">';
-        htmlElementCode += '<p class="vcenter table-cell well">' + title + '</p></a>';
-        htmlElementCode += '<p id="' + id + '" class="vcenter table-cell well" style="display: none">' + description;
-        htmlElementCode += '<br/><a href="' + link + '" target="_blank">More info</a></p>';
-        htmlElementCode += '</div></div>';
-        return $(htmlElementCode);
+    var composePipeElement = function(pipeData) {
+        return $.tmpl(htmlPipeTemplate, pipeData);
     };
 
     var parsePipesResponse = function(data) {
@@ -65,10 +77,19 @@
             var title = data.value.items[i].title;
             var link = data.value.items[i].link;
             var description = data.value.items[i].description;
-            divsHost.append(composePipeElement(i, imageUrl, title, link, description));
+            composePipeElement({
+                Id:i,
+                ImageSrc : imageUrl,
+                Title : title,
+                Url:link,
+                Description:description})
+            .appendTo(divsHost);
         }
-
         return divsHost;
+    };
+
+    var reportError = function(){
+        pageMotto.text('Sorry, but server returned an error.');
     };
 
     var show = function(id) {
@@ -77,15 +98,11 @@
             element.toggle();
     };
 
-    var load = function(){
-        var script = document.createElement( 'script' );
-        script.src = 'http://pipes.yahoo.com/pipes/pipe.run?_id=e9a2e77dffb3205d035c4e311d77bbe6&_render=json&_callback=dataLoadedCallback';
-        var bodyTag = $('body');
-        bodyTag.append(script);
-    };
-
-    load();
-
+    $(function(){
+        $.get(requestUrl)
+                .done(renderNewsOnPage)
+                .fail(reportError)}
+        );
 </script>
 </body>
 </html>
