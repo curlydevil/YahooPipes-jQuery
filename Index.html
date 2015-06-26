@@ -34,7 +34,7 @@
     <header>
         <h1 class="well text-center" id="page-motto"></h1>
     </header>
-    <section class="jumbotron">
+    <section id="jumbo" class="jumbotron" style="display: none">
         <div class="content" id="data-host"></div>
     </section>
 </div>
@@ -60,8 +60,9 @@
         if(data.count == 0){
             pageMotto.text('Sorry, but server returned no news for now. Try again later.');
         } else {
-        $('#data-host').append(parsePipesResponse(data));
-        pageMotto.text('Top ' + data.count + ' news from "' + data.value.title + '" pipe!');
+            $('#jumbo').fadeIn('slow');
+            $('#data-host').append(parsePipesResponse(data));
+            pageMotto.text('Top ' + data.count + ' news from "' + data.value.title + '" pipe!');
         }
     };
 
@@ -83,7 +84,7 @@
                 Title : title,
                 Url:link,
                 Description:description})
-            .appendTo(divsHost);
+                    .appendTo(divsHost);
         }
         return divsHost;
     };
@@ -94,15 +95,17 @@
 
     var show = function(id) {
         var element = $('#'+id);
-        if(element !== null)
-            element.toggle();
+        if(element.css('display') == 'none')
+            element.fadeIn('slow');
+        else
+            element.fadeOut('slow');
     };
 
     $(function(){
-        $.get(requestUrl)
-                .done(renderNewsOnPage)
-                .fail(reportError)}
-        );
+                $.get(requestUrl)
+                        .done(renderNewsOnPage)
+                        .fail(reportError)}
+    );
 </script>
 </body>
 </html>
