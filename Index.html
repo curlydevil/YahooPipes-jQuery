@@ -5,7 +5,8 @@
     <title>Yahoo Pipes: Top 10 news!</title>
     <script data-require="jquery@*" data-semver="2.1.4" src="http://code.jquery.com/jquery-2.1.4.min.js"></script>
     <script src="http://ajax.aspnetcdn.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js"></script>
-    <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet" data-semver="3.3.1" data-require="bootstrap-css@*" />
+    <link href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css" rel="stylesheet"
+          data-semver="3.3.1" data-require="bootstrap-css@*"/>
     <style>
         .thumbnail {
             max-width: 128px;
@@ -39,72 +40,62 @@
     </section>
 </div>
 <script>
-    const requestUrl = 'http://pipes.yahoo.com/pipes/pipe.run?_id=e9a2e77dffb3205d035c4e311d77bbe6&_render=json';
+    var pipesUrl = 'http://pipes.yahoo.com/pipes/pipe.run?_id=e9a2e77dffb3205d035c4e311d77bbe6&_render=json';
+    var templateUrl = 'Templates/NewsPostTemplate.html';
     var pageMotto = $('#page-motto');
+    var newsContainer = $('#data-host');
 
-    var htmlPipeTemplate;
-    (function(){
-        htmlPipeTemplate = '<div style="background-image:url(${ImageSrc})" class="well table-row bg-cover">';
-        htmlPipeTemplate += '<div class="vcenter table-cell">';
-        htmlPipeTemplate += '<a class="thumbnail" href="${ImageSrc}" target="_blank">';
-        htmlPipeTemplate += '<img src="${ImageSrc}" title="Click to open full size image in new window">';
-        htmlPipeTemplate += '</a>';
-        htmlPipeTemplate += '<a onclick="show(${Id})">';
-        htmlPipeTemplate += '<p class="vcenter table-cell well">${Title}</p></a>';
-        htmlPipeTemplate += '<p id="${Id}" class="vcenter table-cell well" style="display: none">${Description}';
-        htmlPipeTemplate += '<br/><a href="${Url}" target="_blank">More info</a></p>';
-        htmlPipeTemplate += '</div></div>';
-    })();
-
-    var renderNewsOnPage = function(data) {
-        if(data.count == 0){
+    var renderNewsOnPage = function (data) {
+        if (data.count == 0) {
             pageMotto.text('Sorry, but server returned no news for now. Try again later.');
         } else {
             $('#jumbo').fadeIn('slow');
-            $('#data-host').append(parsePipesResponse(data));
+            newsContainer.append(composeNews(data));
             pageMotto.text('Top ' + data.count + ' news from "' + data.value.title + '" pipe!');
+
+            newsContainer.delegate(".news-title", "click", this, toggleDescription);
         }
     };
 
-    var composePipeElement = function(pipeData) {
-        return $.tmpl(htmlPipeTemplate, pipeData);
-    };
-
-    var parsePipesResponse = function(data) {
+    var composeNews = function (pipeData) {
         var divsHost = $(document.createElement('div'));
-
-        for (var i = 0; i < data.count; i++) {
-            var imageUrl = data.value.items[i].enclosure.url;
-            var title = data.value.items[i].title;
-            var link = data.value.items[i].link;
-            var description = data.value.items[i].description;
-            composePipeElement({
-                Id:i,
-                ImageSrc : imageUrl,
-                Title : title,
-                Url:link,
-                Description:description})
-                    .appendTo(divsHost);
-        }
-        return divsHost;
+        return $.tmpl("cachedNewsPostTemplate", pipeData.value.items).appendTo(divsHost);
     };
 
-    var reportError = function(){
+    var reportError = function () {
         pageMotto.text('Sorry, but server returned an error.');
     };
 
-    var show = function(id) {
-        var element = $('#'+id);
-        if(element.css('display') == 'none')
-            element.fadeIn('slow');
+    var toggleDescription = function (titleElement) {
+        var description = $(titleElement.currentTarget.parentNode).find('.post-details');
+
+        if (description.css('display') == 'none')
+            description.fadeIn('slow');
         else
-            element.fadeOut('slow');
+            description.fadeOut('slow');
     };
 
-    $(function(){
-                $.get(requestUrl)
-                        .done(renderNewsOnPage)
-                        .fail(reportError)}
+    var getData = function(requestUrl){
+        return $.get(requestUrl);
+    };
+
+    var getTemplate = function(){
+        return getData(templateUrl)
+                .then(cacheTemplate, reportError);
+    };
+
+    var loadPipesData = function(){
+        return getData(pipesUrl)
+                .fail(reportError);
+    };
+
+    var cacheTemplate = function(data){
+        $.template("cachedNewsPostTemplate", data)
+    };
+
+    $(getTemplate()
+        .then(loadPipesData)
+        .then(renderNewsOnPage)
     );
 </script>
 </body>
